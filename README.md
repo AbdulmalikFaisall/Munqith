@@ -1,2 +1,13 @@
 # Munqith
-This projects focuses on building an AI-powered platform to help startups survive by observing and monitoring the patterns that old startups failed by them.
+
+Munqith is an AI-powered platform that helps startups detect early financial risk by identifying repeated risky financial patterns and generating early warning signals.
+
+## Status
+Early development
+
+## Scope
+- Read-only financial data
+- Pattern detection
+- Risk signaling
+
+Munqith does not provide financial advice.
