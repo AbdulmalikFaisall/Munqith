@@ -232,6 +232,52 @@ class Snapshot:
         
         self.stage = stage
     
+    # ==================== Derived Metrics Calculation ====================
+    
+    def compute_derived_metrics(self) -> None:
+        """
+        Compute derived financial metrics from raw financial attributes.
+        
+        Calculations:
+        - monthly_burn = operating_costs - monthly_revenue
+        - runway_months = cash_balance / monthly_burn (if burn > 0)
+        - If burn <= 0: runway_months = None (profitable or break-even)
+        
+        Requirements:
+        - Deterministic (same input always produces same output)
+        - No DB calls
+        - No external state
+        - Can be called at any time (DRAFT or FINALIZED)
+        
+        Rules:
+        - Operating costs and monthly revenue must be set
+        - Calculations use Decimal arithmetic for precision
+        - Division by zero is prevented (burn <= 0 returns None)
+        
+        Side Effects:
+        - Updates self.monthly_burn
+        - Updates self.runway_months
+        """
+        # Only compute if both required inputs are present
+        if self.operating_costs is None or self.monthly_revenue is None:
+            return
+        
+        # Calculate monthly burn: operating_costs - monthly_revenue
+        self.monthly_burn = self.operating_costs - self.monthly_revenue
+        
+        # Calculate runway only if cash_balance is set
+        if self.cash_balance is None:
+            self.runway_months = None
+            return
+        
+        # Calculate runway months
+        # If burn is <= 0, company is profitable or break-even → no runway concern
+        if self.monthly_burn <= 0:
+            self.runway_months = None
+        else:
+            # runway_months = cash_balance / monthly_burn
+            self.runway_months = self.cash_balance / self.monthly_burn
+    
     # ==================== Utilities ====================
     
     def __repr__(self) -> str:
