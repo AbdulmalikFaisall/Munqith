@@ -2,8 +2,9 @@
 
 Handles snapshot entity persistence with transaction management.
 """
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
+from datetime import date
 from sqlalchemy.orm import Session
 from decimal import Decimal
 
@@ -11,6 +12,7 @@ from app.infrastructure.db.models.snapshot import Snapshot as SnapshotModel
 from app.domain.entities.snapshot import Snapshot
 from app.domain.entities.signal import Signal
 from app.domain.entities.rule_result import RuleResult
+from app.domain.enums import SnapshotStatus
 
 
 class SnapshotRepository:
@@ -54,6 +56,55 @@ class SnapshotRepository:
             return None
         
         # Convert ORM model to domain entity
+        return self._model_to_domain(model)
+    
+    def get_finalized_by_company(self, company_id: UUID) -> List[Snapshot]:
+        """
+        Load all finalized snapshots for a company, ordered by snapshot_date ASC.
+        
+        Only returns FINALIZED snapshots.
+        Automatically excludes DRAFT and INVALIDATED snapshots.
+        
+        Args:
+            company_id: UUID of company
+            
+        Returns:
+            List of finalized Snapshot entities, ordered chronologically (earliest first)
+        """
+        models = self.session.query(SnapshotModel).filter(
+            SnapshotModel.company_id == str(company_id),
+            SnapshotModel.status == SnapshotStatus.FINALIZED.value
+        ).order_by(SnapshotModel.snapshot_date.asc()).all()
+        
+        return [self._model_to_domain(model) for model in models]
+    
+    def get_finalized_by_company_and_date(
+        self,
+        company_id: UUID,
+        snapshot_date: date
+    ) -> Optional[Snapshot]:
+        """
+        Load finalized snapshot for a company on a specific date.
+        
+        Only returns FINALIZED snapshots.
+        Automatically excludes DRAFT and INVALIDATED snapshots.
+        
+        Args:
+            company_id: UUID of company
+            snapshot_date: Date of snapshot to load
+            
+        Returns:
+            Domain Snapshot entity or None if not found or not finalized
+        """
+        model = self.session.query(SnapshotModel).filter(
+            SnapshotModel.company_id == str(company_id),
+            SnapshotModel.snapshot_date == snapshot_date,
+            SnapshotModel.status == SnapshotStatus.FINALIZED.value
+        ).first()
+        
+        if not model:
+            return None
+        
         return self._model_to_domain(model)
     
     def save(

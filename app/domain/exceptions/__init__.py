@@ -71,3 +71,24 @@ class FinalizeDraftOnlyError(DomainException):
         super().__init__(msg)
         self.snapshot_id = snapshot_id
         self.current_status = current_status
+
+
+class SnapshotNotFoundOrNotFinalized(DomainException):
+    """
+    Raised when attempting to access a snapshot that doesn't exist or isn't finalized.
+    
+    Used in comparisons and timeline operations where only FINALIZED snapshots are valid.
+    
+    Example:
+        - Comparing with a snapshot date that has no finalized snapshot
+        - Attempting to compare a DRAFT or INVALIDATED snapshot
+    """
+    
+    def __init__(self, company_id: str, snapshot_date: str = ""):
+        if snapshot_date:
+            msg = f"No finalized snapshot found for company {company_id} on {snapshot_date}"
+        else:
+            msg = f"Snapshot for company {company_id} not found or is not finalized"
+        super().__init__(msg)
+        self.company_id = company_id
+        self.snapshot_date = snapshot_date
