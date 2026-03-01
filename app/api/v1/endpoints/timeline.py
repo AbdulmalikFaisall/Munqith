@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from uuid import UUID
 
 from app.infrastructure.db.session import get_db
+from app.api.dependencies.auth import get_current_user
 from app.application.use_cases.company_timeline import CompanyTimelineUseCase
 
 router = APIRouter()
@@ -18,6 +19,7 @@ router = APIRouter()
 @router.get("/companies/{company_id}/timeline")
 async def get_timeline(
     company_id: UUID = Path(..., description="Company UUID"),
+    user: dict = Depends(get_current_user),
     session=Depends(get_db)
 ):
     """
