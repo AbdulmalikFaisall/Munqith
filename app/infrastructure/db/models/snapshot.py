@@ -36,6 +36,9 @@ class Snapshot(Base):
     # Constraints
     __table_args__ = (
         CheckConstraint("status IN ('DRAFT', 'FINALIZED', 'INVALIDATED')", name="ck_snapshot_status"),
+        CheckConstraint("cash_balance >= 0", name="ck_cash_balance_non_negative"),
+        CheckConstraint("monthly_revenue >= 0", name="ck_monthly_revenue_non_negative"),
+        CheckConstraint("operating_costs >= 0", name="ck_operating_costs_non_negative"),
     )
 
     def __repr__(self):
