@@ -13,6 +13,7 @@ from app.domain.engines import (
     StageEvaluator,
     ExplainabilityResolver,
 )
+from app.domain.validators import FinancialValidator
 from app.infrastructure.repositories.snapshot_repository import SnapshotRepository
 from app.domain.exceptions import FinalizeDraftOnlyError
 
@@ -107,6 +108,10 @@ class FinalizeSnapshotUseCase:
         # ===================== Step 2: Validate State =====================
         if not snapshot.is_draft:
             raise FinalizeDraftOnlyError(str(snapshot.id), snapshot.status.value)
+        
+        # ===================== Step 2B: Validate Financial Inputs =====================
+        # Block finalization if financial data is invalid
+        FinancialValidator.validate_snapshot_inputs(snapshot)
         
         # ===================== Step 3: Compute Derived Metrics =====================
         # Pure calculation: operating_costs - revenue = monthly_burn

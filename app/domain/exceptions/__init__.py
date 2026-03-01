@@ -92,3 +92,53 @@ class SnapshotNotFoundOrNotFinalized(DomainException):
         super().__init__(msg)
         self.company_id = company_id
         self.snapshot_date = snapshot_date
+
+
+class DuplicateSnapshotError(DomainException):
+    """
+    Raised when attempting to create a snapshot for a date that already has a snapshot.
+    
+    Snapshots must have a unique (company_id, snapshot_date) combination.
+    """
+    
+    def __init__(self, company_id: str, snapshot_date: str):
+        msg = f"Snapshot already exists for company {company_id} on {snapshot_date}. Cannot create duplicate."
+        super().__init__(msg)
+        self.company_id = company_id
+        self.snapshot_date = snapshot_date
+
+
+class FinancialSanityError(DomainException):
+    """
+    Raised when financial inputs fail sanity validation.
+    
+    Examples:
+        - Negative cash balance
+        - Negative monthly revenue
+        - Negative operating costs
+        - Extremely large values (unrealistic for fintech)
+    """
+    
+    def __init__(self, field: str, value, reason: str):
+        msg = f"Financial sanity check failed: {field} = {value}. {reason}"
+        super().__init__(msg)
+        self.field = field
+        self.value = value
+        self.reason = reason
+
+
+class SnapshotValidationError(DomainException):
+    """
+    Raised when snapshot state or transition validation fails.
+    
+    Examples:
+        - Creating snapshot with non-DRAFT status
+        - Creating snapshot with finalized_at timestamp
+        - Creating snapshot with stage already assigned
+    """
+    
+    def __init__(self, snapshot_id: str, violation: str):
+        msg = f"Snapshot {snapshot_id} validation failed: {violation}"
+        super().__init__(msg)
+        self.snapshot_id = snapshot_id
+        self.violation = violation

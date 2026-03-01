@@ -107,6 +107,33 @@ class SnapshotRepository:
         
         return self._model_to_domain(model)
     
+    def get_any_by_company_and_date(
+        self,
+        company_id: UUID,
+        snapshot_date: date
+    ) -> Optional[Snapshot]:
+        """
+        Load any snapshot (DRAFT, FINALIZED, or INVALIDATED) for a company on a specific date.
+        
+        Used for uniqueness enforcement during creation (check if ANY snapshot exists).
+        
+        Args:
+            company_id: UUID of company
+            snapshot_date: Date of snapshot to load
+            
+        Returns:
+            Domain Snapshot entity or None if not found
+        """
+        model = self.session.query(SnapshotModel).filter(
+            SnapshotModel.company_id == str(company_id),
+            SnapshotModel.snapshot_date == snapshot_date
+        ).first()
+        
+        if not model:
+            return None
+        
+        return self._model_to_domain(model)
+    
     def save(
         self,
         snapshot: Snapshot,
