@@ -3,6 +3,7 @@ from .snapshot import Snapshot
 from .signal import SignalDefinition, SnapshotSignal
 from .rule import RuleDefinition, SnapshotRuleResult
 from .stage import StageDefinition, SnapshotContributingSignal
+from .analytics_insight import AnalyticsInsight
 
 __all__ = [
     "Company",
@@ -13,4 +14,5 @@ __all__ = [
     "SnapshotRuleResult",
     "StageDefinition",
     "SnapshotContributingSignal",
+    "AnalyticsInsight",
 ]
