@@ -24,7 +24,19 @@ class AuthService:
     """
     
     # JWT configuration
-    SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
+    # NOTE: SECRET_KEY MUST be set via environment variable
+    # DO NOT use default value in production
+    SECRET_KEY = os.getenv("SECRET_KEY")
+    if not SECRET_KEY:
+        env = os.getenv("ENV", "development")
+        if env == "production":
+            raise ValueError(
+                "CRITICAL: SECRET_KEY environment variable is required in production. "
+                "Set SECRET_KEY to a strong random string."
+            )
+        # Development default (never use in production)
+        SECRET_KEY = "dev-key-change-in-production"
+    
     ALGORITHM = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
     

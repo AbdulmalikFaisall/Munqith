@@ -229,3 +229,66 @@ Thumbs.db
 
 # Node
 node_modules/
+
+# =================================
+# SENSITIVE DATA & PRODUCTION FILES
+# =================================
+
+# Environment files (local, prod variants)
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+.envrc
+
+# Secrets and credentials
+secrets/
+*.pem
+*.key
+*.crt
+*.csr
+private_key.pem
+public_key.pem
+id_rsa*
+id_dsa*
+
+# Database files and backups
+*.db
+*.sqlite
+*.sqlite3
+postgres_data/
+*.sql
+*.sql.gz
+backup/
+backups/
+dump/
+dumps/
+
+# Application logs
+logs/
+*.log
+log.txt
+
+# IDE local settings
+.vscode/settings.json
+.vscode/launch.json
+
+# Docker local overrides (for production variants)
+docker-compose.prod.yml
+docker-compose.local.yml
+
+# Python coverage and test artifacts
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.pytest_cache
+
+# Runtime state files
+*.pid
+*.sock
+*.tmp
+
+# Keep these tracked
+!.env.example
