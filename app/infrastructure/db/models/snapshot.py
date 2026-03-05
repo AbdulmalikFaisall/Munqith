@@ -1,7 +1,7 @@
 import uuid as uuid_lib
 from datetime import datetime, date
 from decimal import Decimal
-from sqlalchemy import Column, String, DateTime, Date, Numeric, ForeignKey, TEXT, CheckConstraint, TIMESTAMP, text
+from sqlalchemy import Column, String, DateTime, Date, Numeric, ForeignKey, TEXT, CheckConstraint, TIMESTAMP, text, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from ..session import Base
@@ -33,12 +33,20 @@ class Snapshot(Base):
     finalized_at = Column(TIMESTAMP(timezone=False), nullable=True)
     invalidated_at = Column(TIMESTAMP(timezone=False), nullable=True)
     
-    # Constraints
+    # Constraints and Indexes
     __table_args__ = (
+        # Constraints
         CheckConstraint("status IN ('DRAFT', 'FINALIZED', 'INVALIDATED')", name="ck_snapshot_status"),
         CheckConstraint("cash_balance >= 0", name="ck_cash_balance_non_negative"),
         CheckConstraint("monthly_revenue >= 0", name="ck_monthly_revenue_non_negative"),
         CheckConstraint("operating_costs >= 0", name="ck_operating_costs_non_negative"),
+        
+        # Indexes for common queries (Sprint 10)
+        Index("ix_snapshot_company_id", "company_id"),  # Find snapshots by company
+        Index("ix_snapshot_company_date", "company_id", "snapshot_date"),  # Uniqueness check
+        Index("ix_snapshot_status", "status"),  # Find by status (FINALIZED, DRAFT, INVALIDATED)
+        Index("ix_snapshot_finalized_at", "finalized_at"),  # Timeline queries
+        Index("ix_snapshot_company_finalized", "company_id", "finalized_at"),  # Finalized snapshots by company
     )
 
     def __repr__(self):
