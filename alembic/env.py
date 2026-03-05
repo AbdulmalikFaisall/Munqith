@@ -25,6 +25,7 @@ from app.infrastructure.db.models import (
     SnapshotRuleResult,
     StageDefinition,
     SnapshotContributingSignal,
+    AnalyticsInsight,
 )
 
 target_metadata = Base.metadata
