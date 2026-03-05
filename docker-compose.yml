@@ -1,36 +1,70 @@
 version: '3.8'
 
+# Production-ready Docker Compose for Munqith
+# One-command deployment: docker-compose up -d --build
+
 services:
   postgres:
     image: postgres:15-alpine
     container_name: munqith_postgres
     environment:
-      POSTGRES_DB: munqith
-      POSTGRES_USER: munqith
-      POSTGRES_PASSWORD: munqith
+      POSTGRES_DB: ${DB_NAME:-munqith}
+      POSTGRES_USER: ${DB_USER:-munqith}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-munqith}
+      # Security: ensure password is changed in production
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U munqith"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-munqith}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - munqith_network
+    # Security: restrict to internal network only
+    expose:
+      - "5432"
 
-  app:
-    build: .
-    container_name: munqith_app
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: munqith_api
     environment:
-      DATABASE_URL: postgresql://munqith:munqith@postgres:5432/munqith
+      DATABASE_URL: postgresql://${DB_USER:-munqith}:${DB_PASSWORD:-munqith}@postgres:5432/${DB_NAME:-munqith}
+      UVICORN_HOST: 0.0.0.0
+      UVICORN_PORT: 8000
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     depends_on:
       postgres:
         condition: service_healthy
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    volumes:
-      - .:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - munqith_network
+    # Run migrations and start app
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    # Production: remove volumes
+    # Development: uncomment for live reload
+    # volumes:
+    #   - .:/app
 
 volumes:
   postgres_data:
+    driver: local
+
+networks:
+  munqith_network:
+    driver: bridge
