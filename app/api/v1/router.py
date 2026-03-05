@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import health, timeline, compare, trends, auth, invalidate, snapshots
+from app.api.v1.endpoints import health, timeline, compare, trends, auth, invalidate, snapshots, exports
 
 router = APIRouter()
 
@@ -14,6 +14,9 @@ router.include_router(snapshots.router, tags=["snapshots"])
 
 # Include invalidate endpoint (Sprint 8)
 router.include_router(invalidate.router, tags=["snapshots"])
+
+# Include export endpoints (Sprint 10)
+router.include_router(exports.router, tags=["exports"])
 
 # Include timeline endpoints (Sprint 6)
 router.include_router(timeline.router, tags=["timeline"])
