@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Production-ready Docker Compose for Munqith
 # One-command deployment: docker-compose up -d --build
 
