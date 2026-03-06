@@ -47,7 +47,7 @@ class Company:
         self.id = id
         self.name = name.strip()
         self.sector = sector.strip() if sector else None
-        self.created_at = created_at
+        self.created_at = created_at or datetime.utcnow()
         self.updated_at = updated_at
     
     def __repr__(self) -> str:
