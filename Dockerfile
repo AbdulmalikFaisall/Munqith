@@ -32,11 +32,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python dependencies from builder
-COPY --from=builder /root/.local /root/.local
+# Create non-root user for security
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 
-# Update PATH to use local pip installations
-ENV PATH=/root/.local/bin:$PATH
+# Copy Python dependencies from builder into appuser home
+COPY --from=builder /root/.local /home/appuser/.local
+RUN chown -R appuser:appuser /home/appuser/.local && chmod +x /home/appuser/.local/bin/alembic
+
+# Update PATH to use user-local pip installations
+ENV PATH=/home/appuser/.local/bin:$PATH
 
 # Copy application code
 COPY . .
@@ -45,8 +49,6 @@ COPY . .
 HEALTHCHECK --interval=15s --timeout=5s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Create non-root user for security
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
 # Run application
