@@ -2,14 +2,12 @@
 # Provides hot-reload and convenient access for local development
 # Run: docker-compose -f docker-compose.yml -f docker-compose.override.yml up
 
-version: '3.8'
-
 services:
   api:
     # Mount source code for live reload
     volumes:
       - .:/app
-      - __pycache__/:/app/__pycache__
+      - /app/__pycache__
 
     # Enable reloader for development
     command: >
