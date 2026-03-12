@@ -1,5 +1,5 @@
 import { TopBar } from "@/components/layout/top-bar";
-import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { CompanyIntelligenceView } from "@/features/companies/components/company-intelligence-view";
 
 interface CompanyDetailPageProps {
   params: Promise<{ companyId: string }>;
@@ -12,12 +12,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
     <div>
       <TopBar title="Company Intelligence" subtitle={`Company ID: ${companyId}`} />
       <main className="p-4 md:p-8">
-        <Card>
-          <CardTitle>Intelligence View Scaffolding</CardTitle>
-          <CardDescription>
-            Timeline and trends endpoints already exist. Full page activation depends on missing company detail and snapshots list endpoints.
-          </CardDescription>
-        </Card>
+        <CompanyIntelligenceView companyId={companyId} />
       </main>
     </div>
   );
