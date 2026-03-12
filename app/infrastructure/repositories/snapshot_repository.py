@@ -49,7 +49,7 @@ class SnapshotRepository:
             Domain Snapshot entity or None if not found
         """
         model = self.session.query(SnapshotModel).filter(
-            SnapshotModel.id == str(snapshot_id)
+            SnapshotModel.id == snapshot_id
         ).first()
         
         if not model:
@@ -72,7 +72,7 @@ class SnapshotRepository:
             List of finalized Snapshot entities, ordered chronologically (earliest first)
         """
         models = self.session.query(SnapshotModel).filter(
-            SnapshotModel.company_id == str(company_id),
+            SnapshotModel.company_id == company_id,
             SnapshotModel.status == SnapshotStatus.FINALIZED.value
         ).order_by(SnapshotModel.snapshot_date.asc()).all()
         
@@ -97,7 +97,7 @@ class SnapshotRepository:
             Domain Snapshot entity or None if not found or not finalized
         """
         model = self.session.query(SnapshotModel).filter(
-            SnapshotModel.company_id == str(company_id),
+            SnapshotModel.company_id == company_id,
             SnapshotModel.snapshot_date == snapshot_date,
             SnapshotModel.status == SnapshotStatus.FINALIZED.value
         ).first()
@@ -125,7 +125,7 @@ class SnapshotRepository:
             Domain Snapshot entity or None if not found
         """
         model = self.session.query(SnapshotModel).filter(
-            SnapshotModel.company_id == str(company_id),
+            SnapshotModel.company_id == company_id,
             SnapshotModel.snapshot_date == snapshot_date
         ).first()
         
@@ -187,8 +187,8 @@ class SnapshotRepository:
             ORM SnapshotModel for database persistence
         """
         return SnapshotModel(
-            id=str(domain.id),
-            company_id=str(domain.company_id),
+            id=domain.id,
+            company_id=domain.company_id,
             snapshot_date=domain.snapshot_date,
             status=domain.status.value,
             cash_balance=Decimal(str(domain.cash_balance)) if domain.cash_balance else None,
@@ -216,8 +216,8 @@ class SnapshotRepository:
         from app.domain.enums import SnapshotStatus, Stage
         
         return Snapshot(
-            id=UUID(model.id),
-            company_id=UUID(model.company_id),
+            id=self._to_uuid(model.id),
+            company_id=self._to_uuid(model.company_id),
             snapshot_date=model.snapshot_date,
             status=SnapshotStatus(model.status),
             cash_balance=model.cash_balance,
@@ -231,4 +231,10 @@ class SnapshotRepository:
             invalidation_reason=model.invalidation_reason,
             created_at=model.created_at,
         )
+
+    @staticmethod
+    def _to_uuid(value) -> UUID:
+        if isinstance(value, UUID):
+            return value
+        return UUID(str(value))
 

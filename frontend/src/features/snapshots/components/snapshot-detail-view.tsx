@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   useExportSnapshotPdfMutation,
+  useFinalizeSnapshotMutation,
   useInvalidateSnapshotMutation,
 } from "@/features/snapshots/hooks/use-snapshot-actions";
 import { useSnapshotDetailQuery } from "@/features/snapshots/hooks/use-snapshot-detail-query";
@@ -34,6 +35,7 @@ export function SnapshotDetailView({ snapshotId }: SnapshotDetailViewProps) {
   const sessionQuery = useSession();
   const detailQuery = useSnapshotDetailQuery(snapshotId);
   const exportPdfMutation = useExportSnapshotPdfMutation(snapshotId);
+  const finalizeMutation = useFinalizeSnapshotMutation(snapshotId);
   const invalidateMutation = useInvalidateSnapshotMutation(snapshotId);
   const [reason, setReason] = useState("");
 
@@ -60,6 +62,11 @@ export function SnapshotDetailView({ snapshotId }: SnapshotDetailViewProps) {
     event.preventDefault();
     await invalidateMutation.mutateAsync(reason);
     setReason("");
+    await detailQuery.refetch();
+  }
+
+  async function onFinalize() {
+    await finalizeMutation.mutateAsync();
     await detailQuery.refetch();
   }
 
@@ -93,6 +100,9 @@ export function SnapshotDetailView({ snapshotId }: SnapshotDetailViewProps) {
   const contributingSignals = Array.isArray(detailQuery.data.contributing_signals)
     ? detailQuery.data.contributing_signals
     : [];
+  const snapshotStatus = detailQuery.data.status;
+  const canFinalize = snapshotStatus === "DRAFT";
+  const canInvalidate = snapshotStatus === "FINALIZED" && isAdmin;
 
   return (
     <div className="space-y-6">
@@ -119,12 +129,19 @@ export function SnapshotDetailView({ snapshotId }: SnapshotDetailViewProps) {
 
       <section className="grid gap-6 xl:grid-cols-2">
         <Card className="space-y-3">
-          <h3 className="text-base font-semibold text-[var(--ink)]">Export Actions</h3>
+          <h3 className="text-base font-semibold text-[var(--ink)]">Lifecycle and Export Actions</h3>
           <div className="flex flex-wrap gap-2">
+            <Button onClick={onFinalize} disabled={!canFinalize || finalizeMutation.isPending}>
+              {finalizeMutation.isPending ? "Finalizing..." : "Finalize Snapshot"}
+            </Button>
             <Button onClick={() => exportPdfMutation.mutate()} disabled={exportPdfMutation.isPending}>
               {exportPdfMutation.isPending ? "Preparing PDF..." : "Download PDF"}
             </Button>
           </div>
+          {!canFinalize ? (
+            <p className="text-sm text-[var(--muted)]">Only DRAFT snapshots can be finalized.</p>
+          ) : null}
+          {finalizeMutation.error ? <p className="text-sm text-rose-700">{finalizeMutation.error.message}</p> : null}
           {exportPdfMutation.error ? (
             <p className="text-sm text-rose-700">{exportPdfMutation.error.message}</p>
           ) : null}
@@ -132,7 +149,7 @@ export function SnapshotDetailView({ snapshotId }: SnapshotDetailViewProps) {
 
         <Card className="space-y-3">
           <h3 className="text-base font-semibold text-[var(--ink)]">Invalidate Snapshot</h3>
-          {isAdmin ? (
+          {canInvalidate ? (
             <form className="space-y-3" onSubmit={onInvalidate}>
               <textarea
                 value={reason}
@@ -150,7 +167,11 @@ export function SnapshotDetailView({ snapshotId }: SnapshotDetailViewProps) {
               ) : null}
             </form>
           ) : (
-            <p className="text-sm text-[var(--muted)]">Only ADMIN users can invalidate finalized snapshots.</p>
+            <p className="text-sm text-[var(--muted)]">
+              {snapshotStatus !== "FINALIZED"
+                ? "Only FINALIZED snapshots can be invalidated."
+                : "Only ADMIN users can invalidate finalized snapshots."}
+            </p>
           )}
         </Card>
       </section>

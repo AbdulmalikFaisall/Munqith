@@ -1,36 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Munqith Frontend
 
-## Getting Started
+Next.js App Router frontend for the Munqith financial intelligence platform.
 
-First, run the development server:
+## Stack
+
+- Next.js (App Router)
+- TypeScript
+- Tailwind CSS
+- TanStack Query
+- Recharts
+
+## Local Development
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Configure environment:
+
+```bash
+cp .env.example .env.local
+```
+
+3. Set backend URL in `.env.local`:
+
+```env
+MUNQITH_API_BASE_URL=http://localhost:8000
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+NEXT_PUBLIC_DEV_BYPASS_AUTH=false
+```
+
+4. Run frontend:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- http://localhost:3000
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Authentication Flow
 
-## Learn More
+- Login goes through Next.js route handlers.
+- Backend JWT is stored in secure `httpOnly` cookies.
+- Browser does not store tokens in `localStorage`.
+- Protected routes are gated by the dashboard layout.
 
-To learn more about Next.js, take a look at the following resources:
+## Implemented Product Areas
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Dashboard overview
+- Companies list and company intelligence page
+- Snapshot details page
+- Snapshot comparison workspace
+- Snapshot lifecycle actions:
+  - Create DRAFT snapshot
+  - Finalize snapshot
+  - Invalidate snapshot (ADMIN)
+- PDF export
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment Integration
 
-## Deploy on Vercel
+Preferred deployment is same-origin frontend with server-mediated backend calls.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Docker Compose (root project)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Run from repository root:
+
+```bash
+docker-compose up -d --build
+```
+
+Services:
+
+- `api` on port `8000`
+- `frontend` on port `3000`
+
+The frontend container calls backend using internal Docker DNS (`http://api:8000`).
+
+## Notes
+
+- Frontend does not compute stage logic, signal logic, or rule logic.
+- Backend remains the source of truth for financial intelligence.

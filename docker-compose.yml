@@ -37,6 +37,7 @@ services:
       UVICORN_HOST: 0.0.0.0
       UVICORN_PORT: 8000
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
     ports:
       - "${API_PORT:-8000}:8000"
     depends_on:
@@ -58,6 +59,27 @@ services:
     # Development: uncomment for live reload
     # volumes:
     #   - .:/app
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        MUNQITH_API_BASE_URL: http://api:8000
+    container_name: munqith_frontend
+    environment:
+      MUNQITH_API_BASE_URL: http://api:8000
+      NEXT_PUBLIC_API_BASE_URL: http://api:8000
+      NEXT_PUBLIC_DEV_BYPASS_AUTH: "false"
+      AUTH_COOKIE_SECURE: "false"
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - munqith_network
 
 volumes:
   postgres_data:

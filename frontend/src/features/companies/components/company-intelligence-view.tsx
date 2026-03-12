@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
+import Link from "next/link";
 
 import { TrendLineChart } from "@/components/charts/trend-line-chart";
 import { MetricCard } from "@/components/intelligence/metric-card";
@@ -61,6 +61,18 @@ export function CompanyIntelligenceView({ companyId }: CompanyIntelligenceViewPr
   }
 
   const latest = data.timeline[data.timeline.length - 1];
+  const metricText = (value: number | null, suffix = "") => {
+    if (value === null) {
+      return "N/A";
+    }
+    return `${value.toLocaleString()}${suffix}`;
+  };
+  const deltaText = (value: number | null, suffix = "") => {
+    if (value === null) {
+      return "N/A";
+    }
+    return `${value.toLocaleString()}${suffix}`;
+  };
 
   return (
     <div className="space-y-6">
@@ -75,9 +87,9 @@ export function CompanyIntelligenceView({ companyId }: CompanyIntelligenceViewPr
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="Latest Snapshot" value={latest.snapshot_date} />
-        <MetricCard label="Runway" value={`${latest.runway_months.toFixed(2)} months`} />
-        <MetricCard label="Monthly Burn" value={latest.monthly_burn.toLocaleString()} />
-        <MetricCard label="Monthly Revenue" value={latest.monthly_revenue.toLocaleString()} />
+        <MetricCard label="Runway" value={metricText(latest.runway_months, " months")} />
+        <MetricCard label="Monthly Burn" value={metricText(latest.monthly_burn)} />
+        <MetricCard label="Monthly Revenue" value={metricText(latest.monthly_revenue)} />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[2fr_1fr]">
@@ -124,25 +136,44 @@ export function CompanyIntelligenceView({ companyId }: CompanyIntelligenceViewPr
           ) : compareQuery.data ? (
             <div className="space-y-2 text-sm text-[var(--ink)]">
               <p>
-                Stage: {compareQuery.data.from_stage} → {compareQuery.data.to_stage}
+                Stage: {compareQuery.data.from_stage ?? "N/A"} → {compareQuery.data.to_stage ?? "N/A"}
               </p>
-              <p>Revenue Delta: {compareQuery.data.deltas.delta_revenue.toLocaleString()}</p>
-              <p>Burn Delta: {compareQuery.data.deltas.delta_burn.toLocaleString()}</p>
-              <p>Runway Delta: {compareQuery.data.deltas.delta_runway.toFixed(2)}</p>
+              <p>Revenue Delta: {deltaText(compareQuery.data.deltas.delta_revenue)}</p>
+              <p>Burn Delta: {deltaText(compareQuery.data.deltas.delta_burn)}</p>
+              <p>Runway Delta: {deltaText(compareQuery.data.deltas.delta_runway, " months")}</p>
             </div>
           ) : null}
         </Card>
 
         <Card className="space-y-3">
-          <h3 className="text-base font-semibold text-[var(--ink)]">Snapshot Details Access</h3>
-          <p className="text-sm text-[var(--muted)]">
-            Backend currently does not expose snapshot ids in timeline/trends. Use known finalized snapshot IDs from operations logs to open detail pages.
-          </p>
-          <div className="space-y-2 text-sm">
-            <p>Open manually: /snapshots/{'{snapshotId}'}</p>
-            <p className="text-[var(--muted)]">
-              Detail page is fully wired through export JSON, export PDF, and invalidation endpoints.
-            </p>
+          <h3 className="text-base font-semibold text-[var(--ink)]">Snapshots</h3>
+          <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+            {data.snapshots.length === 0 ? (
+              <p className="text-sm text-[var(--muted)]">No snapshots available.</p>
+            ) : (
+              data.snapshots
+                .slice()
+                .reverse()
+                .map((snapshot) => (
+                  <div
+                    key={snapshot.id}
+                    className="flex items-center justify-between gap-3 rounded-md border border-[var(--line)] bg-[var(--surface-soft)] p-2"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-[var(--ink)]">{snapshot.snapshot_date}</p>
+                      <p className="text-xs text-[var(--muted)]">
+                        {snapshot.status} | Stage: {snapshot.stage ?? "N/A"}
+                      </p>
+                    </div>
+                    <Link
+                      href={`/snapshots/${snapshot.id}`}
+                      className="inline-flex h-8 items-center rounded-md border border-[var(--line)] px-3 text-xs font-medium"
+                    >
+                      Open
+                    </Link>
+                  </div>
+                ))
+            )}
           </div>
           <Link href="/comparison" className="inline-flex h-9 items-center rounded-md border border-[var(--line)] px-3 text-sm">
             Open Comparison Workspace

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { ApiError } from "@/lib/api/errors";
-import { loginWithBackend } from "@/lib/api/auth";
-import { LoginRequestDto } from "@/lib/api/types";
+import { registerWithBackend } from "@/lib/api/auth";
+import { RegisterRequestDto } from "@/lib/api/types";
 import { parseExpiryFromToken, parseRoleFromToken } from "@/lib/auth/jwt";
 
 const ACCESS_COOKIE = "munqith_access_token";
@@ -16,10 +16,10 @@ function isSecureCookieEnabled(): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  let payload: LoginRequestDto;
+  let payload: RegisterRequestDto;
 
   try {
-    payload = (await request.json()) as LoginRequestDto;
+    payload = (await request.json()) as RegisterRequestDto;
   } catch {
     return NextResponse.json({ message: "Invalid JSON payload" }, { status: 400 });
   }
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await loginWithBackend(payload);
+    const result = await registerWithBackend(payload);
     const role = parseRoleFromToken(result.access_token);
     const expiresAtMs = parseExpiryFromToken(result.access_token);
 
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
         authenticated: true,
         role,
       },
-      { status: 200 },
+      { status: 201 },
     );
 
     response.cookies.set(ACCESS_COOKIE, result.access_token, {
@@ -65,6 +65,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: error.message }, { status: error.status || 500 });
     }
 
-    return NextResponse.json({ message: "Login failed" }, { status: 500 });
+    return NextResponse.json({ message: "Registration failed" }, { status: 500 });
   }
 }

@@ -1,5 +1,5 @@
-"""Snapshot creation endpoint for Sprint 9."""
-from fastapi import APIRouter, Depends, HTTPException, status
+"""Snapshot endpoints."""
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from uuid import UUID
@@ -9,11 +9,14 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from app.infrastructure.db.session import get_db
-from app.api.dependencies.auth import require_role
+from app.api.dependencies.auth import get_current_user, require_role
 from app.domain.enums import UserRole
 from app.application.use_cases.create_snapshot import CreateSnapshotUseCase
+from app.application.use_cases.finalize_snapshot import FinalizeSnapshotUseCase
+from app.infrastructure.repositories.snapshot_repository import SnapshotRepository
 from app.domain.exceptions import (
     DuplicateSnapshotError,
+    FinalizeDraftOnlyError,
     FinancialSanityError,
     SnapshotValidationError,
 )
@@ -41,6 +44,25 @@ class SnapshotResponse(BaseModel):
     operating_costs: Optional[Decimal]
     stage: Optional[str]
     created_at: Optional[str]
+
+
+def _snapshot_to_payload(snapshot) -> dict:
+    return {
+        "id": str(snapshot.id),
+        "company_id": str(snapshot.company_id),
+        "snapshot_date": str(snapshot.snapshot_date),
+        "status": snapshot.status.value,
+        "cash_balance": float(snapshot.cash_balance) if snapshot.cash_balance else None,
+        "monthly_revenue": float(snapshot.monthly_revenue) if snapshot.monthly_revenue else None,
+        "operating_costs": float(snapshot.operating_costs) if snapshot.operating_costs else None,
+        "monthly_burn": float(snapshot.monthly_burn) if snapshot.monthly_burn else None,
+        "runway_months": float(snapshot.runway_months) if snapshot.runway_months else None,
+        "stage": snapshot.stage.value if snapshot.stage else None,
+        "created_at": snapshot.created_at.isoformat() if snapshot.created_at else None,
+        "finalized_at": snapshot.finalized_at.isoformat() if snapshot.finalized_at else None,
+        "invalidated_at": snapshot.invalidated_at.isoformat() if snapshot.invalidated_at else None,
+        "invalidation_reason": snapshot.invalidation_reason,
+    }
 
 
 @router.post("/snapshots", response_model=SnapshotResponse)
@@ -100,17 +122,7 @@ async def create_snapshot(
         # Return created snapshot
         return JSONResponse(
             status_code=status.HTTP_201_CREATED,
-            content={
-                "id": str(snapshot.id),
-                "company_id": str(snapshot.company_id),
-                "snapshot_date": str(snapshot.snapshot_date),
-                "status": snapshot.status.value,
-                "cash_balance": float(snapshot.cash_balance) if snapshot.cash_balance else None,
-                "monthly_revenue": float(snapshot.monthly_revenue) if snapshot.monthly_revenue else None,
-                "operating_costs": float(snapshot.operating_costs) if snapshot.operating_costs else None,
-                "stage": snapshot.stage.value if snapshot.stage else None,
-                "created_at": str(snapshot.created_at) if snapshot.created_at else None,
-            }
+            content=_snapshot_to_payload(snapshot)
         )
     
     except DuplicateSnapshotError as e:
@@ -141,4 +153,60 @@ async def create_snapshot(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error during snapshot creation"
+        )
+
+
+@router.get("/snapshots/{snapshot_id}")
+async def get_snapshot_detail(
+    snapshot_id: UUID = Path(..., description="Snapshot UUID"),
+    user: dict = Depends(get_current_user),
+    session: Session = Depends(get_db)
+):
+    """Return snapshot details for any lifecycle status."""
+    repository = SnapshotRepository(session)
+    snapshot = repository.get_by_id(snapshot_id)
+
+    if not snapshot:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Snapshot {snapshot_id} not found"
+        )
+
+    return JSONResponse(status_code=status.HTTP_200_OK, content=_snapshot_to_payload(snapshot))
+
+
+@router.post("/snapshots/{snapshot_id}/finalize", response_model=SnapshotResponse)
+async def finalize_snapshot(
+    snapshot_id: UUID = Path(..., description="Snapshot UUID"),
+    user=Depends(require_role(UserRole.ANALYST)),
+    session: Session = Depends(get_db)
+):
+    """Finalize a DRAFT snapshot and compute derived intelligence."""
+    try:
+        use_case = FinalizeSnapshotUseCase(session)
+        snapshot = use_case.execute(snapshot_id)
+        return JSONResponse(status_code=status.HTTP_200_OK, content=_snapshot_to_payload(snapshot))
+
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Snapshot {snapshot_id} not found"
+        )
+
+    except FinalizeDraftOnlyError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e)
+        )
+
+    except FinancialSanityError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e)
+        )
+
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error during snapshot finalization"
         )

@@ -4,9 +4,9 @@ import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "rec
 
 interface TrendPoint {
   date: string;
-  monthly_revenue: number;
-  monthly_burn: number;
-  runway_months: number;
+  monthly_revenue: number | null;
+  monthly_burn: number | null;
+  runway_months: number | null;
 }
 
 interface TrendLineChartProps {

@@ -2,6 +2,38 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import { CreateSnapshotRequestDto, SnapshotMutationResponseDto } from "@/lib/api/types";
+
+async function createSnapshot(payload: CreateSnapshotRequestDto): Promise<SnapshotMutationResponseDto> {
+  const response = await fetch("/api/snapshots", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+    throw new Error(payload?.message ?? "Failed to create snapshot");
+  }
+
+  return (await response.json()) as SnapshotMutationResponseDto;
+}
+
+async function finalizeSnapshot(snapshotId: string): Promise<SnapshotMutationResponseDto> {
+  const response = await fetch(`/api/snapshots/${snapshotId}/finalize`, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+    throw new Error(payload?.message ?? "Failed to finalize snapshot");
+  }
+
+  return (await response.json()) as SnapshotMutationResponseDto;
+}
+
 async function invalidateSnapshot(snapshotId: string, reason: string): Promise<void> {
   const response = await fetch(`/api/snapshots/${snapshotId}/invalidate`, {
     method: "POST",
@@ -48,6 +80,33 @@ export function useInvalidateSnapshotMutation(snapshotId: string) {
     mutationFn: (reason: string) => invalidateSnapshot(snapshotId, reason),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["snapshots", "detail", snapshotId] });
+      await queryClient.invalidateQueries({ queryKey: ["companies"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+export function useCreateSnapshotMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateSnapshotRequestDto) => createSnapshot(payload),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["companies"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+export function useFinalizeSnapshotMutation(snapshotId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => finalizeSnapshot(snapshotId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["snapshots", "detail", snapshotId] });
+      await queryClient.invalidateQueries({ queryKey: ["companies"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }

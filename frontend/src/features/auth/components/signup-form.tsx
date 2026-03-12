@@ -2,20 +2,20 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
-import { useLoginMutation } from "@/features/auth/hooks/use-auth-mutations";
 import { Button } from "@/components/ui/button";
+import { useRegisterMutation } from "@/features/auth/hooks/use-auth-mutations";
 
-export function LoginForm() {
+export function SignupForm() {
   const router = useRouter();
-  const loginMutation = useLoginMutation();
+  const registerMutation = useRegisterMutation();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await loginMutation.mutateAsync({ email, password });
+    await registerMutation.mutateAsync({ email, password });
     router.push("/dashboard");
     router.refresh();
   }
@@ -44,26 +44,19 @@ export function LoginForm() {
           id="password"
           type="password"
           required
+          minLength={8}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           className="h-10 w-full rounded-md border border-[var(--line)] bg-white px-3 text-sm outline-none ring-[var(--brand)] focus:ring-2"
         />
+        <p className="text-xs text-[var(--muted)]">Use at least 8 characters.</p>
       </div>
 
-      {loginMutation.error ? (
-        <p className="text-sm text-rose-700">{loginMutation.error.message}</p>
-      ) : null}
+      {registerMutation.error ? <p className="text-sm text-rose-700">{registerMutation.error.message}</p> : null}
 
-      <Button type="submit" disabled={loginMutation.isPending}>
-        {loginMutation.isPending ? "Signing in..." : "Sign in"}
+      <Button type="submit" disabled={registerMutation.isPending}>
+        {registerMutation.isPending ? "Creating account..." : "Create account"}
       </Button>
-
-      <Link
-        href="/signup"
-        className="inline-flex h-10 w-full items-center justify-center rounded-md border border-[var(--line)] bg-white px-4 py-2 text-sm font-medium text-[var(--ink)] transition-colors hover:bg-[var(--surface-soft)]"
-      >
-        Create an account
-      </Link>
     </form>
   );
 }

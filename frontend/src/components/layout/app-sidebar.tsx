@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Building2, Gauge, GitCompare, Layers } from "lucide-react";
+import { BarChart3, Building2, Gauge, GitCompare, Layers, PlusSquare } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: Gauge },
   { href: "/companies", label: "Companies", icon: Building2 },
   { href: "/comparison", label: "Comparison", icon: GitCompare },
+  { href: "/snapshots/new", label: "New Snapshot", icon: PlusSquare },
 ];
 
 export function AppSidebar() {
@@ -54,7 +55,7 @@ export function AppSidebar() {
           <Layers className="h-4 w-4" />
           Phase Status
         </p>
-        <p className="mt-2 text-sm text-[var(--ink)]">Phase 2 shell is active. Auth and data wiring continue in upcoming phases.</p>
+        <p className="mt-2 text-sm text-[var(--ink)]">Phases 9-12 are active: comparison, lifecycle actions, hardening, and deployment integration.</p>
       </div>
     </aside>
   );

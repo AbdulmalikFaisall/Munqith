@@ -9,6 +9,7 @@ const ITEMS = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/companies", label: "Companies" },
   { href: "/comparison", label: "Compare" },
+  { href: "/snapshots/new", label: "Create" },
 ];
 
 export function MobileNav() {
@@ -16,7 +17,7 @@ export function MobileNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 border-t border-[var(--line)] bg-white lg:hidden">
-      <ul className="grid grid-cols-3">
+      <ul className="grid grid-cols-4">
         {ITEMS.map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (

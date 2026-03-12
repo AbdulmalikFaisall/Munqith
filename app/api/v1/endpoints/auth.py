@@ -17,6 +17,12 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class RegisterRequest(BaseModel):
+    """Register request model."""
+    email: str
+    password: str
+
+
 class LoginResponse(BaseModel):
     """Login response model."""
     access_token: str
@@ -74,6 +80,53 @@ async def login(
         role=user["role"]
     )
     
+    return LoginResponse(
+        access_token=access_token,
+        token_type="bearer"
+    )
+
+
+@router.post("/auth/register", response_model=LoginResponse, status_code=status.HTTP_201_CREATED)
+async def register(
+    request: RegisterRequest,
+    session: Session = Depends(get_db)
+):
+    """
+    Register endpoint.
+
+    Creates a new ANALYST user and returns a JWT token.
+    """
+    email = request.email.strip().lower()
+    password = request.password
+
+    if not email or "@" not in email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Valid email is required"
+        )
+
+    if not password or len(password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Password must be at least 8 characters"
+        )
+
+    repo = UserRepository(session)
+    existing = repo.get_by_email(email)
+    if existing is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email already registered"
+        )
+
+    hashed_password = AuthService.hash_password(password)
+    user = repo.create_user(email=email, hashed_password=hashed_password, role="ANALYST")
+
+    access_token = AuthService.create_access_token(
+        user_id=user["id"],
+        role=user["role"]
+    )
+
     return LoginResponse(
         access_token=access_token,
         token_type="bearer"

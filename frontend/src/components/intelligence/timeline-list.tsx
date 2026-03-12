@@ -7,6 +7,13 @@ interface TimelineListProps {
 }
 
 export function TimelineList({ items }: TimelineListProps) {
+  const valueText = (value: number | null, suffix = "") => {
+    if (value === null) {
+      return "N/A";
+    }
+    return `${value.toLocaleString()}${suffix}`;
+  };
+
   return (
     <div className="rounded-xl border border-[var(--line)] bg-white p-5">
       <h3 className="mb-4 text-base font-semibold text-[var(--ink)]">Timeline</h3>
@@ -18,7 +25,7 @@ export function TimelineList({ items }: TimelineListProps) {
               <StageBadge stage={item.stage} />
             </div>
             <p className="text-xs text-[var(--muted)]">
-              Revenue: {item.monthly_revenue.toLocaleString()} | Burn: {item.monthly_burn.toLocaleString()} | Runway: {item.runway_months.toFixed(2)}
+              Revenue: {valueText(item.monthly_revenue)} | Burn: {valueText(item.monthly_burn)} | Runway: {valueText(item.runway_months, " months")}
             </p>
           </li>
         ))}

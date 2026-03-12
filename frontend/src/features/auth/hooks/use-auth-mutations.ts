@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { LoginRequestDto } from "@/lib/api/types";
+import { LoginRequestDto, RegisterRequestDto } from "@/lib/api/types";
 
 async function login(payload: LoginRequestDto): Promise<void> {
   const response = await fetch("/api/auth/login", {
@@ -29,6 +29,21 @@ async function logout(): Promise<void> {
   }
 }
 
+async function register(payload: RegisterRequestDto): Promise<void> {
+  const response = await fetch("/api/auth/register", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+    throw new Error(payload?.message ?? "Registration failed");
+  }
+}
+
 export function useLoginMutation() {
   const queryClient = useQueryClient();
 
@@ -47,6 +62,17 @@ export function useLogoutMutation() {
     mutationFn: logout,
     onSuccess: async () => {
       await queryClient.clear();
+    },
+  });
+}
+
+export function useRegisterMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: register,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["auth"] });
     },
   });
 }

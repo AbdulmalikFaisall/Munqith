@@ -64,7 +64,7 @@ export function CompaniesTable() {
       {filtered.length === 0 ? (
         <EmptyState
           title="No companies available"
-          description="Configure NEXT_PUBLIC_DEMO_COMPANY_IDS to populate the companies page until company list endpoint is released."
+          description="No companies were returned by the backend. Create companies and refresh this page."
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -79,6 +79,11 @@ export function CompaniesTable() {
               <p className="text-sm text-[var(--muted)]">
                 Latest Snapshot: {company.latestSnapshotDate ?? "N/A"} | Finalized Count: {company.snapshotCount}
               </p>
+              {company.latestSnapshotId ? (
+                <Link href={`/snapshots/${company.latestSnapshotId}`} className="text-xs text-[var(--brand-strong)] hover:underline">
+                  Open latest snapshot
+                </Link>
+              ) : null}
 
               <p className="text-xs text-[var(--muted)]">
                 Revenue: {company.revenueTrend ?? "N/A"} | Burn: {company.burnTrend ?? "N/A"} | Runway: {company.runwayTrend ?? "N/A"}

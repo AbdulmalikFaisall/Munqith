@@ -21,7 +21,7 @@ export function DashboardOverview({ companyId }: DashboardOverviewProps) {
       <main className="p-4 md:p-8">
         <EmptyState
           title="No company selected"
-          description="Set NEXT_PUBLIC_DEMO_COMPANY_ID in frontend/.env.local or add company selection flow in the upcoming phases."
+          description="Select or create a company, then return to dashboard insights."
         />
       </main>
     );
