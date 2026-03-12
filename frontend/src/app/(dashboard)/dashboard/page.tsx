@@ -1,32 +1,20 @@
-import { TopBar } from "@/components/layout/top-bar";
-import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { cookies } from "next/headers";
 
-export default function DashboardPage() {
+import { TopBar } from "@/components/layout/top-bar";
+import { DashboardOverview } from "@/features/dashboard/components/dashboard-overview";
+
+export default async function DashboardPage() {
+  const cookieStore = await cookies();
+  const fallbackCompanyId = process.env.NEXT_PUBLIC_DEMO_COMPANY_ID ?? "";
+  const selectedCompanyId = cookieStore.get("munqith_selected_company")?.value ?? fallbackCompanyId;
+
   return (
     <div>
       <TopBar
         title="Executive Dashboard"
         subtitle="Current state, explainability, and momentum across portfolio companies"
       />
-
-      <main className="grid gap-4 p-4 md:grid-cols-2 md:gap-6 md:p-8 xl:grid-cols-4">
-        <Card>
-          <CardDescription>Current Focus</CardDescription>
-          <CardTitle>Backend Dependency Alignment</CardTitle>
-        </Card>
-        <Card>
-          <CardDescription>Signal</CardDescription>
-          <CardTitle>Phase 2 Shell Ready</CardTitle>
-        </Card>
-        <Card>
-          <CardDescription>Next Phase</CardDescription>
-          <CardTitle>API Client + Auth Wiring</CardTitle>
-        </Card>
-        <Card>
-          <CardDescription>Guardrail</CardDescription>
-          <CardTitle>No Frontend Business Logic</CardTitle>
-        </Card>
-      </main>
+      <DashboardOverview companyId={selectedCompanyId} />
     </div>
   );
 }

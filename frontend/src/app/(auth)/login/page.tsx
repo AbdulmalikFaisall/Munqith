@@ -1,8 +1,7 @@
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { LoginForm } from "@/features/auth/components/login-form";
 
 export default function LoginPage() {
   return (
@@ -14,17 +13,12 @@ export default function LoginPage() {
           </span>
           <CardTitle>Munqith Access Portal</CardTitle>
           <CardDescription>
-            Login wiring lands in Phase 3. This screen is in place for route structure and auth flow integration.
+            Sign in with your analyst or admin account to access the intelligence workspace.
           </CardDescription>
-          <div className="flex gap-2">
-            <Button disabled>Sign in (Phase 3)</Button>
-            <Link
-              href="/dashboard"
-              className={cn(
-                "inline-flex h-10 items-center justify-center rounded-md border border-[var(--line)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition-colors hover:bg-[var(--surface-soft)]",
-              )}
-            >
-              Preview Shell
+          <LoginForm />
+          <div>
+            <Link href="/dashboard" className="text-xs text-[var(--muted)] underline">
+              Developer bypass: /dashboard (only when NEXT_PUBLIC_DEV_BYPASS_AUTH=true)
             </Link>
           </div>
         </Card>
